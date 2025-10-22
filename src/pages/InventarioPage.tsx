@@ -1,78 +1,124 @@
 // src/pages/InventarioPage.tsx
-
-import { 
-  GridComponent, 
-  ColumnsDirective, 
-  ColumnDirective, 
-  Inject, 
-  Page, 
-  Edit, 
-  Toolbar 
+import {
+    GridComponent,
+    ColumnsDirective,
+    ColumnDirective,
+    Inject,
+    Page,
+    Edit,
+    Toolbar
 } from '@syncfusion/ej2-react-grids';
+// --- Import the necessary types correctly ---
+import { DataManager, WebApiAdaptor, Query } from '@syncfusion/ej2-data';
+import type { AdaptorOptions } from '@syncfusion/ej2-data'; // Type-only import
 
-// --- ¡NUEVAS IMPORTACIONES! ---
-// DataManager maneja la lógica de la API
-// UrlAdaptor sabe cómo hablar con una API RESTful estándar
-import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
+// --- URL Base Completa ---
+const BASE_API_URL = import.meta.env.VITE_API_URL + '/api/inventario';
 
-// --- ¡YA NO NECESITAMOS LOS DATOS DE PRUEBA! ---
-// const inventoryData = [ ... ]; // <-- Borramos esto
+// --- 1. DEFINE EL ADAPTADOR PERSONALIZADO (CORREGIDO) ---
+class CustomWebApiAdaptor extends WebApiAdaptor {
 
-// --- 1. DEFINIMOS LA URL DE NUESTRO BACKEND ---
-const BASE_API_URL = import.meta.env.VITE_API_URL + '/api/inventario'; // <-- Back to the full path
+    // Sobrescribimos 'update' con la firma correcta
+    public update(dm: DataManager, keyField: string, value: Object, tableName?: string | undefined): Object {
+        // Construimos la URL correcta añadiendo el ID (que está en el objeto 'value')
+        const updateUrl = `${dm.dataSource.url}/${(value as any)[keyField]}`;
 
-// --- NEW DataManager Configuration ---
+        // Devolvemos el objeto que describe la petición AJAX para DataManager
+        return {
+            type: 'PUT',
+            url: updateUrl,
+            data: JSON.stringify(value),
+            contentType: 'application/json; charset=utf-8' // Es buena práctica añadir esto
+        };
+    }
+
+    // Sobrescribimos 'remove' con la firma correcta
+    // NOTA: El 'value' aquí es el ID directamente, no el objeto completo
+    public remove(dm: DataManager, keyField: string, value: number | string, tableName?: string | undefined): Object {
+        // Construimos la URL correcta añadiendo el ID (que es 'value' aquí)
+        const removeUrl = `${dm.dataSource.url}/${value}`;
+
+        // Devolvemos el objeto que describe la petición AJAX
+        return {
+            type: 'DELETE',
+            url: removeUrl
+        };
+    }
+}
+
+// --- 2. CONFIGURA EL DATAMANAGER (Simple) ---
 const dataManager = new DataManager({
-  url: BASE_API_URL,        // URL for GET (Read)
-  insertUrl: BASE_API_URL,  // URL for POST (Create)
-  updateUrl: BASE_API_URL,  // URL for PUT (Update) - Adaptor WILL add /id
-  removeUrl: BASE_API_URL,  // URL for DELETE (Delete) - Adaptor WILL add /id
-  adaptor: new WebApiAdaptor(),
-  // --- THIS IS THE CRITICAL ADDITION ---
-  // Explicitly tell the DataManager which field is the ID.
-  // It needs this to construct the PUT and DELETE URLs correctly (e.g., /api/inventario/3).
-  id: 'id' 
+    adaptor: new CustomWebApiAdaptor(), // <-- Usamos NUESTRO adaptador corregido
+    url: BASE_API_URL,
+    key: 'id'
 });
 
-// La configuración de edición y barra de herramientas no cambia
-const editSettings = { 
-  allowEditing: true,
-  allowAdding: true,
-  allowDeleting: true,
-  mode: 'Dialog'
+// --- Configuración de edición y barra de herramientas (sin cambios) ---
+const editSettings = {
+    allowEditing: true,
+    allowAdding: true,
+    allowDeleting: true,
+    mode: 'Dialog'
 };
 const toolbarOptions = ['Add', 'Edit', 'Delete', 'Update', 'Cancel'];
 
-// --- 3. EL COMPONENTE (CON UN CAMBIO MUY IMPORTANTE) ---
+// --- 3. EL COMPONENTE ---
 export default function InventarioPage() {
-  return (
-    <div style={{ margin: '20px' }}>
-      <h2>Gestión de Inventario (¡Conectado a la API!)</h2>
-      <GridComponent 
-        // --- 4. LE PASAMOS EL DATAMANAGER ---
-        dataSource={dataManager} // <-- Ya no usa los datos de prueba
-        
-        editSettings={editSettings}
-        toolbar={toolbarOptions}
-        allowPaging={true}
-        height={300}
-      >
-        <ColumnsDirective>
-          {/* --- 5. ¡CAMBIO CRÍTICO DE MAYÚSCULAS! ---
-            Tu API de Node.js + PostgreSQL devuelve el JSON con claves
-            en minúsculas (ej: "id", "nombre"). El 'field' de Syncfusion
-            DEBE coincidir EXACTAMENTE con el nombre de la clave del JSON.
-          */}
-          <ColumnDirective field='id' headerText='ID' width='100' textAlign="Right" isPrimaryKey={true} isIdentity={true}   
-  allowEditing={false} />
-          <ColumnDirective field='nombre' headerText='Nombre de Prenda' width='150' />
-          <ColumnDirective field='tipo' headerText='Tipo' width='100' />
-          <ColumnDirective field='cantidad' headerText='Cantidad' width='100' textAlign="Right" />
-          <ColumnDirective field='precio' headerText='Precio' width='100' format="C2" textAlign="Right" />
-        </ColumnsDirective>
-        
-        <Inject services={[Page, Edit, Toolbar]} />
-      </GridComponent>
-    </div>
-  );
+    return (
+        <div style={{ margin: '20px' }}>
+            <h2>Gestión de Inventario (¡Conectado a la API!)</h2>
+            <GridComponent
+                dataSource={dataManager} // <-- Usa el DataManager
+                editSettings={editSettings}
+                toolbar={toolbarOptions}
+                allowPaging={true}
+                height={300} // Puedes ajustar la altura según necesites
+            >
+                <ColumnsDirective>
+                    {/* Define las columnas */}
+                    <ColumnDirective
+                        field='id'
+                        headerText='ID'
+                        width='100'
+                        textAlign="Right"
+                        isPrimaryKey={true} // <-- Vital
+                        isIdentity={true}
+                        allowEditing={false}
+                    />
+                    <ColumnDirective
+                        field='nombre'
+                        headerText='Nombre de Prenda'
+                        width='150'
+                        validationRules={{ required: true }} // <-- Validación
+                    />
+                    <ColumnDirective
+                        field='tipo'
+                        headerText='Tipo'
+                        width='100'
+                    />
+                    <ColumnDirective
+                        field='cantidad'
+                        headerText='Cantidad'
+                        width='100'
+                        textAlign="Right"
+                        editType='numericedit' // <-- Edición numérica
+                        format='N0'            // <-- Formato entero
+                        validationRules={{ required: true, number: true }} // <-- Validación
+                    />
+                    <ColumnDirective
+                        field='precio'
+                        headerText='Precio'
+                        width='100'
+                        format="C2"            // <-- Formato moneda
+                        textAlign="Right"
+                        editType='numericedit' // <-- Edición numérica
+                        validationRules={{ required: true, number: true }} // <-- Validación
+                    />
+                </ColumnsDirective>
+
+                {/* Inyecta los servicios necesarios */}
+                <Inject services={[Page, Edit, Toolbar]} />
+            </GridComponent>
+        </div>
+    );
 }
