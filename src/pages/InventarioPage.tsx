@@ -19,15 +19,17 @@ import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
 // const inventoryData = [ ... ]; // <-- Borramos esto
 
 // --- 1. DEFINIMOS LA URL DE NUESTRO BACKEND ---
-const SERVICE_URL = import.meta.env.VITE_API_URL + '/api/inventario';
-// --- 2. CREAMOS EL DATA MANAGER ---
-const dataManager = new DataManager({
-  adaptor: new WebApiAdaptor(), // Le decimos que es una API web
-  url: SERVICE_URL,        // URL para LEER (GET)
-  insertUrl: SERVICE_URL,  // URL para CREAR (POST)
-  updateUrl: SERVICE_URL,  // URL para ACTUALIZAR (PUT)
-  removeUrl: SERVICE_URL   // URL para BORRAR (DELETE)
-});
+const BASE_API_URL = import.meta.env.VITE_API_URL + '/api'; // <-- URL base sin /inventario
+
+ const dataManager = new DataManager({
+   adaptor: new WebApiAdaptor(), 
+   url: BASE_API_URL + '/inventario', // <-- URL completa para GET
+   // Para Insert, Update, Remove, SÓLO la URL base. 
+   // El Adaptor añadirá /inventario y/o el ID según corresponda.
+   insertUrl: BASE_API_URL + '/inventario',  
+   updateUrl: BASE_API_URL + '/inventario',  
+   removeUrl: BASE_API_URL + '/inventario'   
+ });
 
 // La configuración de edición y barra de herramientas no cambia
 const editSettings = { 
@@ -58,7 +60,8 @@ export default function InventarioPage() {
             en minúsculas (ej: "id", "nombre"). El 'field' de Syncfusion
             DEBE coincidir EXACTAMENTE con el nombre de la clave del JSON.
           */}
-          <ColumnDirective field='id' headerText='ID' width='100' textAlign="Right" isPrimaryKey={true} />
+          <ColumnDirective field='id' headerText='ID' width='100' textAlign="Right" isPrimaryKey={true} isIdentity={true}   
+  allowEditing={false} />
           <ColumnDirective field='nombre' headerText='Nombre de Prenda' width='150' />
           <ColumnDirective field='tipo' headerText='Tipo' width='100' />
           <ColumnDirective field='cantidad' headerText='Cantidad' width='100' textAlign="Right" />
