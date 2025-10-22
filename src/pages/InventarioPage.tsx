@@ -19,17 +19,20 @@ import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
 // const inventoryData = [ ... ]; // <-- Borramos esto
 
 // --- 1. DEFINIMOS LA URL DE NUESTRO BACKEND ---
-const BASE_API_URL = import.meta.env.VITE_API_URL + '/api'; // <-- URL base sin /inventario
+const BASE_API_URL = import.meta.env.VITE_API_URL + '/api/inventario'; // <-- Back to the full path
 
- const dataManager = new DataManager({
-   adaptor: new WebApiAdaptor(), 
-   url: BASE_API_URL + '/inventario', // <-- URL completa para GET
-   // Para Insert, Update, Remove, SÓLO la URL base. 
-   // El Adaptor añadirá /inventario y/o el ID según corresponda.
-   insertUrl: BASE_API_URL + '/inventario',  
-   updateUrl: BASE_API_URL + '/inventario',  
-   removeUrl: BASE_API_URL + '/inventario'   
- });
+// --- NEW DataManager Configuration ---
+const dataManager = new DataManager({
+  url: BASE_API_URL,        // URL for GET (Read)
+  insertUrl: BASE_API_URL,  // URL for POST (Create)
+  updateUrl: BASE_API_URL,  // URL for PUT (Update) - Adaptor WILL add /id
+  removeUrl: BASE_API_URL,  // URL for DELETE (Delete) - Adaptor WILL add /id
+  adaptor: new WebApiAdaptor(),
+  // --- THIS IS THE CRITICAL ADDITION ---
+  // Explicitly tell the DataManager which field is the ID.
+  // It needs this to construct the PUT and DELETE URLs correctly (e.g., /api/inventario/3).
+  id: 'id' 
+});
 
 // La configuración de edición y barra de herramientas no cambia
 const editSettings = { 
