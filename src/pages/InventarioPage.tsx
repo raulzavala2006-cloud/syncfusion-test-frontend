@@ -8,18 +8,18 @@ import {
     Edit,
     Toolbar
 } from '@syncfusion/ej2-react-grids';
-// --- Import the necessary types correctly ---
-import { DataManager, WebApiAdaptor, Query } from '@syncfusion/ej2-data';
-import type { AdaptorOptions } from '@syncfusion/ej2-data'; // Type-only import
+// --- Unused imports Query and AdaptorOptions removed ---
+import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
 
 // --- URL Base Completa ---
 const BASE_API_URL = import.meta.env.VITE_API_URL + '/api/inventario';
 
-// --- 1. DEFINE EL ADAPTADOR PERSONALIZADO (CORREGIDO) ---
+// --- 1. DEFINE EL ADAPTADOR PERSONALIZADO (CORREGIDO y LIMPIO) ---
 class CustomWebApiAdaptor extends WebApiAdaptor {
 
     // Sobrescribimos 'update' con la firma correcta
-    public update(dm: DataManager, keyField: string, value: Object, tableName?: string | undefined): Object {
+    // Added underscore to _tableName as it's unused
+    public update(dm: DataManager, keyField: string, value: Object, _tableName?: string | undefined): Object {
         // Construimos la URL correcta añadiendo el ID (que está en el objeto 'value')
         const updateUrl = `${dm.dataSource.url}/${(value as any)[keyField]}`;
 
@@ -28,13 +28,14 @@ class CustomWebApiAdaptor extends WebApiAdaptor {
             type: 'PUT',
             url: updateUrl,
             data: JSON.stringify(value),
-            contentType: 'application/json; charset=utf-8' // Es buena práctica añadir esto
+            contentType: 'application/json; charset=utf-8'
         };
     }
 
     // Sobrescribimos 'remove' con la firma correcta
+    // Added underscore to _tableName as it's unused
     // NOTA: El 'value' aquí es el ID directamente, no el objeto completo
-    public remove(dm: DataManager, keyField: string, value: number | string, tableName?: string | undefined): Object {
+    public remove(dm: DataManager, _keyField: string, value: number | string, _tableName?: string | undefined): Object {
         // Construimos la URL correcta añadiendo el ID (que es 'value' aquí)
         const removeUrl = `${dm.dataSource.url}/${value}`;
 
